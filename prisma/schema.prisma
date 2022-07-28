@@ -7,16 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Teste {
-  id              Int            @id @default(autoincrement())
-  name            String
-  TesteRelation   TesteRelation? @relation(fields: [testeRelationId], references: [id])
-  testeRelationId Int?
-}
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-model TesteRelation {
-  id    Int    @id @default(autoincrement())
-  phone String
-
-  teste Teste[]
+  @@map("users")
 }
