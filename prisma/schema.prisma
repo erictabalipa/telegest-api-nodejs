@@ -8,12 +8,220 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  password  String
+  id               Int                @id @default(autoincrement())
+  name             String
+  email            String
+  password         String
+  PermissionToUser PermissionToUser[]
+  logs             UserChangeLog[]
+  instalation      Instalation[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Permission {
+  id               Int                @id @default(autoincrement())
+  code             String
+  title            String
+  PermissionToUser PermissionToUser[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("permissions")
+}
+
+model PermissionToUser {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int
+
+  @@id([userId, permissionId])
+  @@map("permissions_to_user")
+}
+
+model UserChangeLog {
+  id     Int    @id @default(autoincrement())
+  log    String
+  User   User?  @relation(fields: [userId], references: [id])
+  userId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_change_logs")
+}
+
+model LampLocation {
+  id        Int    @id @default(autoincrement())
+  number    Int
+  zip_code  Int
+  street    String
+  district  String
+  city      String
+  state     String
+  reference String
+
+  lamp   Lamp @relation(fields: [lampId], references: [id])
+  lampId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("lamp_locations")
+}
+
+model LampModel {
+  id               Int      @id @default(autoincrement())
+  model            String
+  fabricator       String
+  fabrication_date DateTime
+  life_time        Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lamp      Lamp[]
+
+  @@map("lamp_models")
+}
+
+model Instalation {
+  id       Int      @id @default(autoincrement())
+  datetime DateTime
+
+  user                         User                           @relation(fields: [userId], references: [id])
+  userId                       Int
+  lamp                         Lamp[]
+  InsatallationHasUsableObject InsatallationHasUsableObject[]
+
+  @@map("instalations")
+}
+
+model Lamp {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  instalation   Instalation @relation(fields: [instalationId], references: [id])
+  instalationId Int
+
+  lampModel   LampModel @relation(fields: [lampModelId], references: [id])
+  lampModelId Int
+
+  lampLocation LampLocation[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  Statuse            Statuse[]
+  LampHasMaintenance LampHasMaintenance[]
+  GroupHasLamp       GroupHasLamp[]
+
+  @@map("lamps")
+}
+
+model Statuse {
+  id             Int @id @default(autoincrement())
+  dimmer         Int
+  operation_mode Int
+
+  lamp   Lamp @relation(fields: [lampId], references: [id])
+  lampId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("statuses")
+}
+
+model UsableObject {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
+  InsatallationHasUsableObject InsatallationHasUsableObject[]
+  MaintenanceHasUsableObject   MaintenanceHasUsableObject[]
+
+  @@map("usable_objects")
+}
+
+model InsatallationHasUsableObject {
+  id                  Int    @id @default(autoincrement())
+  quantity            Int
+  unit_of_measurement String
+
+  instalation   Instalation @relation(fields: [instalationId], references: [id])
+  instalationId Int
+
+  usable_objects UsableObject @relation(fields: [usableObjectId], references: [id])
+  usableObjectId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("installations_has_usable_objects")
+}
+
+model Maintenance {
+  id               Int @id @default(autoincrement())
+  maintenance_type Int
+
+  createdAt                  DateTime                     @default(now())
+  MaintenanceHasUsableObject MaintenanceHasUsableObject[]
+  LampHasMaintenance         LampHasMaintenance[]
+
+  @@map("maintenances")
+}
+
+model MaintenanceHasUsableObject {
+  id                  Int    @id @default(autoincrement())
+  quantity            Int
+  unit_of_measurement String
+
+  maintenance   Maintenance @relation(fields: [instalationId], references: [id])
+  instalationId Int
+
+  usable_objects UsableObject @relation(fields: [usableObjectId], references: [id])
+  usableObjectId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("maintenances_has_usable_objects")
+}
+
+model LampHasMaintenance {
+  lamp   Lamp @relation(fields: [lampId], references: [id])
+  lampId Int
+
+  maintenance   Maintenance @relation(fields: [maintenanceId], references: [id])
+  maintenanceId Int
+
+  createdAt DateTime @default(now())
+
+  @@id([lampId, maintenanceId])
+  @@map("lamp_maintenances")
+}
+
+model LampGroup {
+  id           Int            @id @default(autoincrement())
+  name         String
+  GroupHasLamp GroupHasLamp[]
+
+  @@map("lamp_groups")
+}
+
+model GroupHasLamp {
+  lamp_group  LampGroup @relation(fields: [lampGroupId], references: [id])
+  lampGroupId Int
+
+  lamp   Lamp @relation(fields: [lampId], references: [id])
+  lampId Int
+
+  @@id([lampGroupId, lampId])
+  @@map("group_has_lamps")
 }
