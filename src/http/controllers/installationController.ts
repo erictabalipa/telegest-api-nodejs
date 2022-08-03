@@ -78,6 +78,18 @@ export class InstallationController {
             },
           },
         },
+        include: {
+          lamp: {
+            include: {
+              lampLocation: true,
+              lampModel: true,
+              GroupHasLamp: true,
+              LampHasMaintenance: true,
+              Statuse: true,
+            },
+          },
+          InsatallationHasUsableObject: true,
+        },
       });
 
       return response.status(201).send(installation);
