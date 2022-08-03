@@ -14,7 +14,7 @@ model User {
   password         String
   PermissionToUser PermissionToUser[]
   logs             UserChangeLog[]
-  instalation      Instalation[]
+  instalation      Installation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,7 +90,7 @@ model LampModel {
   @@map("lamp_models")
 }
 
-model Instalation {
+model Installation {
   id       Int      @id @default(autoincrement())
   datetime DateTime
 
@@ -106,7 +106,7 @@ model Lamp {
   id   Int    @id @default(autoincrement())
   name String
 
-  instalation   Instalation @relation(fields: [instalationId], references: [id])
+  instalation   Installation @relation(fields: [instalationId], references: [id])
   instalationId Int
 
   lampModel   LampModel @relation(fields: [lampModelId], references: [id])
@@ -154,7 +154,7 @@ model InsatallationHasUsableObject {
   quantity            Int
   unit_of_measurement String
 
-  instalation   Instalation @relation(fields: [instalationId], references: [id])
+  instalation   Installation @relation(fields: [instalationId], references: [id])
   instalationId Int
 
   usable_objects UsableObject @relation(fields: [usableObjectId], references: [id])
