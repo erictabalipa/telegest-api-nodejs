@@ -95,11 +95,9 @@ export class PermissionController {
           'permission-add-to-user'
         )
       ) {
-        return response
-          .status(401)
-          .send({
-            message: 'Você não tem permissão adicionar permissões a um usuário',
-          });
+        return response.status(401).send({
+          message: 'Você não tem permissão adicionar permissões a um usuário',
+        });
       }
 
       const permissionExists = await this.permissionRepository.findByCode(

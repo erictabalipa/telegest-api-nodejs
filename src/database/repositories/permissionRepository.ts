@@ -6,18 +6,19 @@ export class PermissionRepository {
     return client.permission.findMany();
   }
   addToUser(id: number, userId: number) {
-    return client.permission.update({
+    return client.permissionToUser.create({
       data: {
-        PermissionToUser: {
+        user: {
           connect: {
-            userId_permissionId: {
-              permissionId: id,
-              userId,
-            },
+            id: userId,
+          },
+        },
+        permission: {
+          connect: {
+            id,
           },
         },
       },
-      where: { id },
     });
   }
   findByCode(code: string) {

@@ -17,6 +17,10 @@ const userController = new UserController(
   new Permission()
 );
 
+userRoutes.get('/', userController.listAll);
+userRoutes.get('/me', userController.me);
 userRoutes.post('/', userController.create);
+userRoutes.put('/', userController.update);
+userRoutes.delete('/', userController.delete);
 
 export { userRoutes };
