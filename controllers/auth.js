@@ -71,25 +71,24 @@ exports.login = async (req, res, next) => {
 }
 
 exports.getPermissions = async (req, res, next) => {
-    const token = req.params.token;
-    let decodedToken;
     try {
+        const token = req.params.token;
+        let decodedToken;
         decodedToken = jwt.verify(
             token,
             "nobody's gonna know, nobody's gonna know - they gonna know! - who will they know?, who will they know?, who will they know? - I can't, I can't, I just, I can't - omg!"
         );
+        if (!decodedToken) {
+            const error = new Error('Invalid token.');
+            error.statusCode = 400;
+            throw error;
+        }
+        const permission = await Permission.findById(decodedToken.permission);
+        res.status(200).json({ name: decodedToken.name , email: decodedToken.email, permissions: permission.permissions });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
     }
-    if (!decodedToken) {
-        const error = new Error('Invalid token.');
-        error.statusCode = 400;
-        throw error;
-    }
-    let permission = decodedToken.permission;
-    permission = await Permission.findById(permission);
-    res.status(200).json({ name: decodedToken.name , email: decodedToken.email, permissions: permission.permissions });
 }
