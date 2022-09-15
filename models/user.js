@@ -17,7 +17,8 @@ const userSchema = new Schema(
     },
     permission: {
       type: Schema.Types.ObjectId,
-      red: 'Permission'
+      red: 'Permission',
+      required: true
     }
   },
   { timestamps: true }

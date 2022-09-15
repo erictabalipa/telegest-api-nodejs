@@ -6,7 +6,12 @@ const permissionSchema = new Schema(
     name: {
       type: String,
       required: true
-    }
+    },
+    permissions: [
+      {
+        type: String
+      }
+    ]
   }
 )
 

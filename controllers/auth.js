@@ -11,9 +11,9 @@ exports.signup = async (req, res, next) => {
         const email = req.body.email;
         const password = req.body.password;
         const name = req.body.name;
-        const permissionName = req.body.permission;
+        const permissionId = req.body.permission;
         const hashedPw = await bcrypt.hash(password, 12);
-        const permission = await Permission.findOne({ name: permissionName });
+        const permission = await Permission.findById(permissionId);
         if (!permission) {
             const error = new Error('Permission not found.');
             error.statusCode = 401;
@@ -53,8 +53,10 @@ exports.login = async (req, res, next) => {
         }
         const token = jwt.sign(
             {
+                name: user.name,
                 email: user.email,
-                userId: user._id.toString()
+                userId: user._id.toString(),
+                permission: user.permission
             },
             "nobody's gonna know, nobody's gonna know - they gonna know! - who will they know?, who will they know?, who will they know? - I can't, I can't, I just, I can't - omg!",
             { expiresIn: '1h' }
@@ -66,4 +68,28 @@ exports.login = async (req, res, next) => {
         }
         next(err);
     }
+}
+
+exports.getPermissions = async (req, res, next) => {
+    const token = req.params.token;
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(
+            token,
+            "nobody's gonna know, nobody's gonna know - they gonna know! - who will they know?, who will they know?, who will they know? - I can't, I can't, I just, I can't - omg!"
+        );
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+    if (!decodedToken) {
+        const error = new Error('Invalid token.');
+        error.statusCode = 400;
+        throw error;
+    }
+    let permission = decodedToken.permission;
+    permission = await Permission.findById(permission);
+    res.status(200).json({ name: decodedToken.name , email: decodedToken.email, permissions: permission.permissions });
 }
