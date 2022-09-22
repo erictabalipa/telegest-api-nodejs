@@ -30,6 +30,29 @@ function checkRequest(req) {
 
 exports.postService = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "post-service") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         // Checking if the request is OK
         const reqError = checkRequest(req);
         if (reqError) {

@@ -32,6 +32,29 @@ function checkRequest(req) {
 
 exports.getLamps = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "get-lamps") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         const addressed = req.query.addressed;
         let lamps;
         if (addressed == 'true') {
@@ -135,6 +158,29 @@ exports.getLamps = async (req, res, next) => {
 
 exports.getLamp = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "get-lamp") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         const lampId = req.params.lampId;
         let lamp;
         await Lamp.findById(lampId)
@@ -178,6 +224,29 @@ exports.getLamp = async (req, res, next) => {
 
 exports.postLamp = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "post-lamp") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         // Checking if the requist is OK
         const reqError = checkRequest(req);
         if (reqError) {
@@ -247,6 +316,29 @@ exports.postLamp = async (req, res, next) => {
 
 exports.editLamp = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "edit-lamp") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         const lampId = req.params.lampId;
         let lamp;
         await Lamp.findById(lampId)
@@ -309,6 +401,29 @@ exports.editLamp = async (req, res, next) => {
 
 exports.deleteLamp = async (req, res, next) => {
     try {
+        // Permissions check
+        let checkPermission = true;
+        await Permission.findById(req.permissions)
+            .then(perms => {
+                perms.permissions.forEach(perm => {
+                    if (perm == "delete-lamp") {
+                        checkPermission = false;
+                    }
+                })
+                if (checkPermission) {
+                    const error = new Error("You don't have permission to do this.");
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch (err => {
+                if (err.statusCode == 401) {
+                    throw err;
+                }
+                const error = new Error('Error finding permissions in database.');
+                error.statusCode = 500;
+                throw error;
+            });
         const lampId = req.params.lampId;
         let lamp;
         let deleteModel = false;
