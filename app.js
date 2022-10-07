@@ -2,10 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
-const MONGODB_URI = 'mongodb+srv://telegestao:telegestao_tcc@cluster0.izanfqg.mongodb.net/tcc';
+const MONGODB_URI = 'mongodb+srv://' + "telegestao" + ':' + "telegestao_tcc" + '@cluster0.izanfqg.mongodb.net/' + "tcc";
 
 const authRoutes = require('./routes/auth');
 const lampRoutes = require('./routes/lamp');
+const modelRoutes = require('./routes/model');
 const servRoutes = require('./routes/service');
 
 const app = express();
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
 
 app.use(authRoutes);
 app.use(lampRoutes);
+app.use(modelRoutes);
 app.use(servRoutes);
 
 app.use((error, req, res, next) => {

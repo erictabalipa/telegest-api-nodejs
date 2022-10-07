@@ -10,19 +10,78 @@ const serviceSchema = new Schema(
     },
     lampsInstalled: [
       {
-        type: Schema.Types.ObjectId,
-        red: 'Lamp'
+        users: [
+          {
+            type: Schema.Types.ObjectId,
+            red: 'User'
+          }
+        ],
+        lamp: {
+          type: Schema.Types.ObjectId,
+          red: 'Lamp'
+        },
+        location: {
+          number: {
+            type: Number,
+            required: true
+          },
+          zip_code: {
+            type: String,
+            required: true
+          },
+          street: {
+            type: String,
+            required: true
+          },
+          district: {
+            type: String,
+            required: true
+          },
+          state: {
+            type: String,
+            required: true
+          },
+          reference: String
+        },
+        finished: {
+          type: Boolean,
+          required: true
+        },
+        finishedDate: {
+          type: Date,
+          required: false
+        }
       }
     ],
     lampsRepaired: [
       {
-        type: Schema.Types.ObjectId,
-        red: 'Lamp'
+        users: [
+          {
+            type: Schema.Types.ObjectId,
+            red: 'User'
+          }
+        ],
+        oldLamp: {
+          type: Schema.Types.ObjectId,
+          red: 'Lamp'
+        },
+        newLamp: {
+          type: Schema.Types.ObjectId,
+          red: 'Lamp'
+        },
+        finished: {
+          type: Boolean,
+          required: true
+        },
+        finishedDate: {
+          type: Date,
+          required: false
+        }
       }
     ],
-    date: {
+    finishedDate: {
       type: Date,
-      required: true
+      required: false
     }
   },
   { timestamps: true }

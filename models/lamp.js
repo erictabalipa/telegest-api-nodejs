@@ -12,6 +12,10 @@ const lampSchema = new Schema(
       red: 'Model',
       required: true
     },
+    online: {
+      type: Boolean,
+      required: true
+    },
     location: {
       type: Schema.Types.ObjectId,
       red: 'Location',

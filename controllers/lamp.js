@@ -254,7 +254,6 @@ exports.postLamp = async (req, res, next) => {
             error.statusCode = reqError.statusCode;
             throw error;
         }
-
         // Checking if the model already exists
         let modelId = null;
         await Model.where(
@@ -274,8 +273,7 @@ exports.postLamp = async (req, res, next) => {
                 error.statusCode = 500;
                 throw error;
             });
-
-        // If the model not exist -> Create a new one
+        // If model does not exist -> Create a new one
         if (modelId == null) {
             const model = new Model({
                 name: req.body.model.name,
@@ -292,11 +290,11 @@ exports.postLamp = async (req, res, next) => {
                     throw error;
                 });
         }
-
-        // Create the new lamp
+        // Create new lamp
         const lamp = new Lamp({
             name: req.body.name,
-            model: modelId
+            model: modelId,
+            online: false
         })
         await lamp.save()
             .then(result => {
@@ -339,9 +337,8 @@ exports.editLamp = async (req, res, next) => {
                 error.statusCode = 500;
                 throw error;
             });
-        const lampId = req.params.lampId;
         let lamp;
-        await Lamp.findById(lampId)
+        await Lamp.findById(req.params.lampId)
             .then(lampData => {
                 lamp = lampData;
             })
@@ -361,7 +358,7 @@ exports.editLamp = async (req, res, next) => {
                     if (typeof req.body.location.reference != 'undefined') {
                         location.reference = req.body.location.reference;
                     } else if (typeof location.reference != 'undefined') {
-                        location.reference = "";
+                        location.reference = undefined;
                     }
                     location.save();
                 })
@@ -385,7 +382,7 @@ exports.editLamp = async (req, res, next) => {
         }
         await lamp.save()
             .then(result => {
-                res.status(201).json({ message: 'Lamp updated.', lampId: result._id });
+                res.status(200).json({ message: 'Lamp updated.', lampId: result._id });
             }).catch(err => {
                 const error = new Error('Error saving lamp in database');
                 error.statusCode = 500;
@@ -397,7 +394,7 @@ exports.editLamp = async (req, res, next) => {
         }
         next(err);
     }
-}
+};
 
 exports.deleteLamp = async (req, res, next) => {
     try {
