@@ -12,7 +12,7 @@ router.get('/service/:id', isAuth, serviceController.getService);
 
 router.post('/new-service', isAuth, serviceController.postService);
 
-// router.put('/edit-service/:id', isAuth);
+// router.put('/edit-service/:id', isAuth, serviceController.editService);
 
 router.delete('/delete-service/:id', isAuth, serviceController.deleteService);
 
