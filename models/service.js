@@ -8,14 +8,20 @@ const serviceSchema = new Schema(
       red: 'User',
       required: true
     },
-    lampsInstalled: [
+    code: {
+      type: String,
+      required: true
+    },
+    priority: {
+      type: String,
+      required: true
+    },
+    deadline: {
+      type: Date,
+      required: false
+    },
+    instalations: [
       {
-        users: [
-          {
-            type: Schema.Types.ObjectId,
-            red: 'User'
-          }
-        ],
         lamp: {
           type: Schema.Types.ObjectId,
           red: 'Lamp'
@@ -43,6 +49,10 @@ const serviceSchema = new Schema(
           },
           reference: String
         },
+        materialsUsed: {
+          type: String,
+          required: false
+        },
         finished: {
           type: Boolean,
           required: true
@@ -53,21 +63,46 @@ const serviceSchema = new Schema(
         }
       }
     ],
-    lampsRepaired: [
+    correctiveMaintenances: [
       {
-        users: [
-          {
-            type: Schema.Types.ObjectId,
-            red: 'User'
-          }
-        ],
-        oldLamp: {
+        lamp: {
           type: Schema.Types.ObjectId,
           red: 'Lamp'
         },
-        newLamp: {
+        newlamp: {
           type: Schema.Types.ObjectId,
-          red: 'Lamp'
+          red: 'Lamp',
+          required: false
+        },
+        materialsUsed: {
+          type: String,
+          required: false
+        },
+        finished: {
+          type: Boolean,
+          required: true
+        },
+        finishedDate: {
+          type: Date,
+          required: false
+        }
+      }
+    ],
+    preventiveMaintenances: [
+      {
+        lamp: {
+          type: Schema.Types.ObjectId,
+          red: 'Lamp',
+          required: true
+        },
+        newlamp: {
+          type: Schema.Types.ObjectId,
+          red: 'Lamp',
+          required: false
+        },
+        materialsUsed: {
+          type: String,
+          required: false
         },
         finished: {
           type: Boolean,

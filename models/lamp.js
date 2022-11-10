@@ -20,6 +20,10 @@ const lampSchema = new Schema(
       type: Schema.Types.ObjectId,
       red: 'Location',
       required: false
+    },
+    serviceAssigned: {
+      type: Boolean,
+      required: true
     }
   },
   { timestamps: true }

@@ -247,7 +247,7 @@ exports.postLamp = async (req, res, next) => {
                 error.statusCode = 500;
                 throw error;
             });
-        // Checking if the requist is OK
+        // Checking if the request is OK
         const reqError = checkRequest(req);
         if (reqError) {
             const error = new Error(reqError.message);
@@ -294,7 +294,8 @@ exports.postLamp = async (req, res, next) => {
         const lamp = new Lamp({
             name: req.body.name,
             model: modelId,
-            online: false
+            online: false,
+            serviceAssigned: false
         })
         await lamp.save()
             .then(result => {
