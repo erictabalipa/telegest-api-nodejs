@@ -45,6 +45,11 @@ router.post('/new-service', isAuth, [
 
 router.delete('/delete-service/:id', isAuth, serviceController.deleteService);
 
-router.post('/complete-service', isAuth, serviceController.postServiceDone);
+router.post('/complete-service', isAuth, [
+  body('servicesCompleted')
+    .exists()
+    .isArray()
+    .withMessage('Invalid or missing "servicesCompleted" field.')
+], serviceController.postServiceDone);
 
 module.exports = router;

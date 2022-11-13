@@ -5,33 +5,16 @@ const Lamp = require('../models/lamp');
 const Model = require('../models/model');
 const Location = require('../models/location');
 
+const { checkPermission } = require('../utils/aux_functions');
+
 const { validationResult } = require('express-validator');
 
 exports.getServices = async (req, res, next) => {
   try {
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "get-services") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (err.statusCode == 401) {
-          throw err;
-        }
-        const error = new Error('Error finding permissions in database.');
-        error.statusCode = 500;
-        throw error;
-      });
+    await checkPermission(req.permissions, "get-services")
+      .catch(err => { throw err; });
+    // Fetching Services
     const services = await Service.find();
     res.status(200).json(services);
   } catch (err) {
@@ -45,28 +28,9 @@ exports.getServices = async (req, res, next) => {
 exports.getService = async (req, res, next) => {
   try {
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "get-service") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (err.statusCode == 401) {
-          throw err;
-        }
-        const error = new Error('Error finding permissions in database.');
-        error.statusCode = 500;
-        throw error;
-      });
+    await checkPermission(req.permissions, "get-service")
+      .catch(err => { throw err; });
+    // Fetching Services
     const service = await Service.findById(req.params.id);
     res.status(200).json(service);
   } catch (err) {
@@ -93,29 +57,8 @@ exports.postService = async (req, res, next) => {
       throw error;
     }
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "post-service") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (typeof err.statusCode == 'undefined') {
-          const error = new Error('Error finding permissions in database.');
-          error.statusCode = 500;
-          throw error;
-        } else {
-          throw err;
-        }
-      });
+    await checkPermission(req.permissions, "post-service")
+      .catch(err => { throw err; });
     // Checking if the request has services
     if ((typeof req.body.instalations == 'undefined' || req.body.instalations.length == 0) &&
     (typeof req.body.correctiveMaintenances == 'undefined' || req.body.correctiveMaintenances.length == 0) &&
@@ -177,7 +120,7 @@ exports.postService = async (req, res, next) => {
               }
               lampsToAssign.push(lamp._id);
               let installation = {
-                lamp: req.body.instalations[index].lamp,
+                lamp: req.body.instalations[index].lampId,
                 location: {
                   number: req.body.instalations[index].location.number,
                   zip_code: req.body.instalations[index].location.zip_code,
@@ -261,7 +204,7 @@ exports.postService = async (req, res, next) => {
               }
               lampsToAssign.push(lamp._id);
               const preventiveMaintenance = {
-                lamp: req.body.correctiveMaintenances[index],
+                lamp: req.body.preventiveMaintenances[index],
                 finished: false
               }
               service.preventiveMaintenances.push(preventiveMaintenance);
@@ -296,28 +239,8 @@ exports.postService = async (req, res, next) => {
 exports.editService = async (req, res, next) => {
   try {
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "edit-service") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (err.statusCode == 401) {
-          throw err;
-        }
-        const error = new Error('Error finding permissions in database.');
-        error.statusCode = 500;
-        throw error;
-      });
+    await checkPermission(req.permissions, "edit-service")
+      .catch(err => { throw err; });
     // Checking if the service exist
     let service = await Service.findById(req.params.id);
     if (service == null) {
@@ -494,34 +417,16 @@ exports.editService = async (req, res, next) => {
 exports.deleteService = async (req, res, next) => {
   try {
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "delete-service") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (err.statusCode == 401) {
-          throw err;
-        }
-        const error = new Error('Error finding permissions in database.');
-        error.statusCode = 500;
-        throw error;
-      });
+    await checkPermission(req.permissions, "delete-service")
+      .catch(err => { throw err; });
+    // Fetching Service
     const service = await Service.findById(req.params.id);
     if (service == null) {
       const error = new Error('Service not found.');
       error.statusCode = 404;
       throw error;
     }
+    // Deleting Service
     await service.delete();
     res.status(200).json({ message: 'Service deleted successfully.' });
   } catch (err) {
@@ -535,141 +440,209 @@ exports.deleteService = async (req, res, next) => {
 exports.postServiceDone = async (req, res, next) => {
   try {
     // Permissions check
-    let checkPermission = true;
-    await Permission.findById(req.permissions)
-      .then(perms => {
-        perms.permissions.forEach(perm => {
-          if (perm == "complete-service") {
-            checkPermission = false;
-          }
-        })
-        if (checkPermission) {
-          const error = new Error("You don't have permission to do this.");
-          error.statusCode = 401;
-          throw error;
-        }
-      })
-      .catch (err => {
-        if (err.statusCode == 401) {
-          throw err;
-        }
-        const error = new Error('Error finding permissions in database.');
-        error.statusCode = 500;
-        throw error;
-      });
-    // Check if order exist
-    const service = await Service.findById(req.body.orderId);
+    await checkPermission(req.permissions, "complete-service")
+      .catch(err => { throw err; });
+    // Checking if order exist
+    let service = await Service.findById(req.body.orderId);
     if (service == null) {
-      const error = new Error('Service not found.');
+      const error = new Error('Order not found.');
       error.statusCode = 404;
       throw error;
     }
-    // Check if service exist
-    for (let index = 0; index < req.body.servicesId.length; index++) {
-      let exists = false;
-      if (service.lampsInstalled.length > 0) {
-        for (let index2 = 0; index2 < service.lampsInstalled.length; index2++) {
-          if (service.lampsInstalled[index2]._id == req.body.servicesId[index]) {
-            exists = true;
-            break;
-          }
+    // Checking if services exists
+    const aux = req.body.servicesCompleted;
+    for (let index = 0; index < aux.length; index++) {
+      const element = aux[index];
+      let check = false;
+      if (typeof service.instalations != 'undefined' && 
+        service.instalations.length > 0) {
+          service.instalations.forEach(installation => {
+            const aux = installation._id.toString();
+            if (aux == element.serviceId) {
+              check = true;
+            }
+          })
         }
-      }
-      if (service.lampsRepaired.length > 0) {
-        for (let index2 = 0; index2 < service.lampsRepaired.length; index2++) {
-          if (service.lampsRepaired[index2]._id == req.body.servicesId[index]) {
-            exists = true;
-            break;
-          }
+      if (check == false && 
+        typeof service.correctiveMaintenances != 'undefined' && 
+        service.correctiveMaintenances.length > 0) {
+          service.correctiveMaintenances.forEach(correctiveMaintenance => {
+            const aux = correctiveMaintenance._id.toString();
+            if (aux == element.serviceId) {
+              check = true;
+            }
+          })
         }
-      }
-      if (exists = false) {
+      if (check == false && 
+        typeof service.preventiveMaintenances != 'undefined' && 
+        service.preventiveMaintenances.length > 0) {
+          service.preventiveMaintenances.forEach(preventiveMaintenance => {
+            const aux = preventiveMaintenance._id.toString();
+            if (aux == element.serviceId) {
+              check = true;
+            }
+          })
+        }
+      if (!check) {
         const error = new Error('Service not found.');
         error.statusCode = 404;
         throw error;
       }
     }
-    // Finishing services
-    for (let index = 0; index < req.body.servicesId.length; index++) {
-      if (service.lampsInstalled.length > 0) {
-        for (let index2 = 0; index2 < service.lampsInstalled.length; index2++) {
-          if (service.lampsInstalled[index2]._id == req.body.servicesId[index]) {
-            service.lampsInstalled[index2].finished = true;
-            service.lampsInstalled[index2].finishedDate = new Date();
-            break;
+    // Finishing Services
+    for (let index = 0; index < req.body.servicesCompleted.length; index++) {
+      let finded = false;
+      if (typeof service.instalations != 'undefined') {
+        if (service.instalations.length > 0) {
+          for (let index2 = 0; index2 < service.instalations.length; index2++) {
+            if (req.body.servicesCompleted[index].serviceId == service.instalations[index2]._id) {
+              finded = true;
+              // Updating and Saving Lamp
+              const auxLampId = service.instalations[index2].lamp.toString();
+              let lamp = await Lamp.findById(auxLampId);
+              let newLocation = new Location({
+                number: service.instalations[index2].location.number,
+                zip_code: service.instalations[index2].location.zip_code,
+                street: service.instalations[index2].location.street,
+                district: service.instalations[index2].location.district,
+                state: service.instalations[index2].location.state
+              })
+              if (typeof service.instalations[index2].location.reference != 'undefined') {
+                newLocation.reference = service.instalations[index2].location.reference;
+              }
+              await newLocation.save().then(result => {
+                lamp.location = result._id;
+              })
+              lamp.online = true;
+              lamp.serviceAssigned = false;
+              await lamp.save();
+              // Completing Service
+              service.instalations[index2].finished = true;
+              service.instalations[index2].finishedDate = new Date();
+              if (typeof req.body.servicesCompleted[index].materialsUsed != 'undefined') {
+                service.instalations[index2].materialsUsed = req.body.servicesCompleted[index].materialsUsed;
+              }
+            }
           }
         }
       }
-      if (service.lampsRepaired.length > 0) {
-        for (let index2 = 0; index2 < service.lampsRepaired.length; index2++) {
-          if (service.lampsRepaired[index2]._id == req.body.servicesId[index]) {
-            service.lampsRepaired[index2].finished = true;
-            service.lampsRepaired[index2].finishedDate = new Date();
-            break;
+      if (finded != true && typeof service.correctiveMaintenances != 'undefined') {
+        if (service.correctiveMaintenances.length > 0) {
+          for (let index2 = 0; index2 < service.correctiveMaintenances.length; index2++) {
+            if (req.body.servicesCompleted[index].serviceId == service.correctiveMaintenances[index2]._id) {
+              finded = true;
+              if (typeof req.body.servicesCompleted[index].lampId == 'undefined') {
+                // Updating and Saving Lamp
+                let lamp = await Lamp.findById(service.correctiveMaintenances[index2].lamp.toString());
+                lamp.online = true;
+                lamp.serviceAssigned = false;
+                await lamp.save();
+                // Completing Service
+                service.correctiveMaintenances[index2].finished = true;
+                service.correctiveMaintenances[index2].finishedDate = new Date();
+                if (typeof req.body.servicesCompleted[index].materialsUsed != 'undefined') {
+                  service.correctiveMaintenances[index2].materialsUsed = req.body.servicesCompleted[index].materialsUsed;
+                }
+              } else {
+                // Updating Lamps
+                let oldLamp = await Lamp.findById(service.correctiveMaintenances[index2].lamp.toString());
+                let newLamp = await Lamp.findById(req.body.servicesCompleted[index].lampId);
+                newLamp.online = true;
+                oldLamp.online = false;
+                newLamp.serviceAssigned = false;
+                oldLamp.serviceAssigned = false;
+                newLamp.location = oldLamp.location;
+                oldLamp.location = undefined;
+                // Saving Lamps
+                await newLamp.save();
+                await oldLamp.save();
+                // Completing Service
+                service.correctiveMaintenances[index2].finished = true;
+                service.correctiveMaintenances[index2].finishedDate = new Date();
+                if (typeof req.body.servicesCompleted[index].materialsUsed != 'undefined') {
+                  service.correctiveMaintenances[index2].materialsUsed = req.body.servicesCompleted[index].materialsUsed;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (finded != true && typeof service.preventiveMaintenances != 'undefined') {
+        if (service.preventiveMaintenances.length > 0) {
+          for (let index2 = 0; index2 < service.preventiveMaintenances.length; index2++) {
+            if (req.body.servicesCompleted[index].serviceId == service.preventiveMaintenances[index2]._id) {
+              finded = true;
+              if (typeof req.body.servicesCompleted[index].lampId == 'undefined') {
+                // Updating and Saving Lamp
+                let lamp = await Lamp.findById(service.preventiveMaintenances[index2].lamp.toString());
+                lamp.online = true;
+                lamp.serviceAssigned = false;
+                await lamp.save();
+                // Completing Service
+                service.preventiveMaintenances[index2].finished = true;
+                service.preventiveMaintenances[index2].finishedDate = new Date();
+                if (typeof req.body.servicesCompleted[index].materialsUsed != 'undefined') {
+                  service.preventiveMaintenances[index2].materialsUsed = req.body.servicesCompleted[index].materialsUsed;
+                }
+              } else {
+                // Updating Lamps
+                let oldLamp = await Lamp.findById(service.preventiveMaintenances[index2].lamp.toString());
+                let newLamp = await Lamp.findById(req.body.servicesCompleted[index].lampId);
+                newLamp.online = true;
+                oldLamp.online = false;
+                newLamp.serviceAssigned = false;
+                oldLamp.serviceAssigned = false;
+                newLamp.location = oldLamp.location;
+                oldLamp.location = undefined;
+                // Saving Lamps
+                await newLamp.save();
+                await oldLamp.save();
+                // Completing Service
+                service.preventiveMaintenances[index2].finished = true;
+                service.preventiveMaintenances[index2].finishedDate = new Date();
+                if (typeof req.body.servicesCompleted[index].materialsUsed != 'undefined') {
+                  service.preventiveMaintenances[index2].materialsUsed = req.body.servicesCompleted[index].materialsUsed;
+                }
+              }
+            }
           }
         }
       }
     }
+    // Check All Services Done
     let all_done = true;
-    if (service.lampsInstalled.length > 0) {
-      for (let index2 = 0; index2 < service.lampsInstalled.length; index2++) {
-        if (service.lampsInstalled[index2].finished == false) {
-          all_done = false;
-          break;
-        }
+    if (typeof service.instalations != 'undefined') {
+      if (service.instalations.length > 0) {
+        service.instalations.forEach(installation => {
+          if (installation.finished != true) {
+            all_done = false;
+          }
+        })
       }
     }
-    if (service.lampsRepaired.length > 0) {
-      for (let index2 = 0; index2 < service.lampsRepaired.length; index2++) {
-        if (service.lampsRepaired[index2].finished == false) {
-          all_done = false;
-          break;
-        }
+    if (typeof service.correctiveMaintenances != 'undefined') {
+      if (service.correctiveMaintenances.length > 0) {
+        service.correctiveMaintenances.forEach(correctiveMaintenance => {
+          if (correctiveMaintenance.finished != true) {
+            all_done = false;
+          }
+        })
       }
     }
-    if (all_done == true) {
+    if (typeof service.preventiveMaintenances != 'undefined') {
+      if (service.preventiveMaintenances.length > 0) {
+        service.preventiveMaintenances.forEach(preventiveMaintenance => {
+          if (preventiveMaintenance.finished != true) {
+            all_done = false;
+          }
+        })
+      }
+    }
+    if (all_done) {
       service.finishedDate = new Date();
     }
+    // Saving Service
     await service.save();
-
-    // Update Lamps
-    for (let index = 0; index < req.body.servicesId.length; index++) {
-      if (service.lampsInstalled.length > 0) {
-        for (let index2 = 0; index2 < service.lampsInstalled.length; index2++) {
-          if (req.body.servicesId[index] == service.lampsInstalled[index2]._id) {
-            const location = new Location({
-              number: service.lampsInstalled[index2].location.number,
-              zip_code: service.lampsInstalled[index2].location.zip_code,
-              street: service.lampsInstalled[index2].location.street,
-              district: service.lampsInstalled[index2].location.district,
-              state: service.lampsInstalled[index2].location.state
-            })
-            if (typeof service.lampsInstalled[index2].location.reference != 'undefined') {
-              location.reference = service.lampsInstalled[index2].location.reference;
-            }
-            const result = await location.save();
-            const lamp = await Lamp.findById(service.lampsInstalled[index2].lamp);
-            lamp.location = result._id;
-            lamp.online = true;
-            await lamp.save();
-          }
-        }
-      }
-      if (service.lampsRepaired.length > 0) {
-        for (let index2 = 0; index2 < service.lampsRepaired.length; index2++) {
-          if (req.body.servicesId[index] == service.lampsRepaired[index2]._id) {
-            const lamp = await Lamp.findById(service.lampsRepaired[index2].oldLamp);
-            const lamp2 = await Lamp.findById(service.lampsRepaired[index2].newLamp);
-            lamp2.location = lamp.location;
-            lamp2.online = true;
-            lamp.location = undefined;
-            lamp.online = false;
-            await lamp2.save();
-            await lamp.save();
-          }
-        }
-      }
-    }
     res.status(200).json({ message: 'Service updated successfully.' });
   } catch (err) {
     if (!err.statusCode) {
