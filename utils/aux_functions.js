@@ -1,4 +1,5 @@
 const Permission = require('../models/permission');
+const ChangeLog = require('../models/changeLog');
 
 async function checkPermission(userPermissions, permissionNeeded) {
   try {
@@ -29,4 +30,19 @@ async function checkPermission(userPermissions, permissionNeeded) {
   }
 }
 
+async function registerChange(responsable, whatWasDone, whatWasChanged) {
+  try {
+    const changeLog = new ChangeLog({
+      user: responsable,
+      whatWasDone: whatWasDone,
+      whatWasChanged: whatWasChanged
+    })
+    await changeLog.save();
+  }
+  catch (err) {
+    throw err;
+  }
+}
+
 module.exports.checkPermission = checkPermission;
+module.exports.registerChange = registerChange;

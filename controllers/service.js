@@ -30,6 +30,14 @@ exports.getService = async (req, res, next) => {
     // Permissions check
     await checkPermission(req.permissions, "get-service")
       .catch(err => { throw err; });
+    // Checking the request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      error.data = errors.array();
+      throw error;
+    }
     // Fetching Services
     const service = await Service.findById(req.params.id);
     res.status(200).json(service);
@@ -226,8 +234,10 @@ exports.postService = async (req, res, next) => {
       await Lamp.findByIdAndUpdate(lampsToAssign[index], { serviceAssigned: true });
     }
     // Creating new service
-    await service.save();
+    let result = await service.save();
     res.status(201).json({ message: 'Service created.' });
+    // Registering Changes
+    await registerChange(req.email, 'created a new service order.', result._id);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -241,6 +251,14 @@ exports.editService = async (req, res, next) => {
     // Permissions check
     await checkPermission(req.permissions, "edit-service")
       .catch(err => { throw err; });
+    // Checking the request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      error.data = errors.array();
+      throw error;
+    }
     // Checking if the service exist
     let service = await Service.findById(req.params.id);
     if (service == null) {
@@ -419,6 +437,14 @@ exports.deleteService = async (req, res, next) => {
     // Permissions check
     await checkPermission(req.permissions, "delete-service")
       .catch(err => { throw err; });
+    // Checking the request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      error.data = errors.array();
+      throw error;
+    }
     // Fetching Service
     const service = await Service.findById(req.params.id);
     if (service == null) {
@@ -426,9 +452,45 @@ exports.deleteService = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // Deleting Service
+    // Unassigning Lamps from not finished services
+    if (typeof service.instalations != 'undefined') {
+      if (service.instalations.length > 0) {
+        for (let index = 0; index < service.instalations.length; index++) {
+          if (service.instalations[index].finished == false) {
+            let lamp = await Lamp.findById(service.instalations[index].lamp);
+            lamp.serviceAssigned = false;
+            await lamp.save();
+          }
+        }
+      }
+    }
+    if (typeof service.correctiveMaintenances != 'undefined') {
+      if (service.correctiveMaintenances.length > 0) {
+        for (let index = 0; index < service.correctiveMaintenances.length; index++) {
+          if (service.correctiveMaintenances[index].finished == false) {
+            let lamp = await Lamp.findById(service.correctiveMaintenances[index].lamp);
+            lamp.serviceAssigned = false;
+            await lamp.save();
+          }
+        }
+      }
+    }
+    if (typeof service.preventiveMaintenances != 'undefined') {
+      if (service.preventiveMaintenances.length > 0) {
+        for (let index = 0; index < service.preventiveMaintenances.length; index++) {
+          if (service.preventiveMaintenances[index].finished == false) {
+            let lamp = await Lamp.findById(service.preventiveMaintenances[index].lamp);
+            lamp.serviceAssigned = false;
+            await lamp.save();
+          }
+        }
+      }
+    }
+    // Deleting Order
     await service.delete();
     res.status(200).json({ message: 'Service deleted successfully.' });
+    // Registering Changes
+    await registerChange(req.email, 'deleted a service order.', req.params.id);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -442,6 +504,14 @@ exports.postServiceDone = async (req, res, next) => {
     // Permissions check
     await checkPermission(req.permissions, "complete-service")
       .catch(err => { throw err; });
+    // Checking the request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      error.data = errors.array();
+      throw error;
+    }
     // Checking if order exist
     let service = await Service.findById(req.body.orderId);
     if (service == null) {
@@ -644,6 +714,15 @@ exports.postServiceDone = async (req, res, next) => {
     // Saving Service
     await service.save();
     res.status(200).json({ message: 'Service updated successfully.' });
+    // Registering Changes
+    for (let index = 0; index < req.body.servicesCompleted.length; index++) {
+      req.body.servicesCompleted[index];
+      await registerChange(
+        req.email,
+        'completed the service "' + req.body.servicesCompleted[index] + '" from order.',
+        req.body.orderI
+      );
+    }
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

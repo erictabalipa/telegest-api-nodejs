@@ -8,7 +8,13 @@ const router = express.Router();
 
 router.get('/services', isAuth, serviceController.getServices);
 
-router.get('/service/:id', isAuth, serviceController.getService);
+router.get('/service/:id', isAuth, [
+  check('id')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "id" parameter.')
+], serviceController.getService);
 
 router.post('/new-service', isAuth, [
   body('userId')
@@ -43,12 +49,24 @@ router.post('/new-service', isAuth, [
 
 // router.put('/edit-service/:id', isAuth, serviceController.editService);
 
-router.delete('/delete-service/:id', isAuth, serviceController.deleteService);
+router.delete('/delete-service/:id', isAuth, [
+  check('id')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "id" parameter.')
+], serviceController.deleteService);
 
 router.post('/complete-service', isAuth, [
+  body('orderId')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "orderId" field.'),
   body('servicesCompleted')
     .exists()
     .isArray()
+    .notEmpty()
     .withMessage('Invalid or missing "servicesCompleted" field.')
 ], serviceController.postServiceDone);
 
