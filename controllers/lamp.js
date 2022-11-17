@@ -498,4 +498,31 @@ exports.getDeletedLamps = async (req, res, next) => {
     }
     next(err);
   }
-}
+};
+
+exports.postLightSwitch = async (req, res, next) => {
+  try {
+    // Permissions check
+    await checkPermission(req.permissions, "edit-lampOnline")
+      .catch(err => { throw err; });
+    // Fetching Lamp
+    const lamp = await Lamp.findById(req.params.lampId)
+      .catch(err => {
+        const error = new Error('Error fetching lamp.');
+        error.statusCode = 500;
+        throw error;
+      })
+    if (lamp.online == true) {
+      lamp.online = false;
+    } else {
+      lamp.online = true;
+    }
+    await lamp.save();
+    res.status(200).json({ message: 'Lamp state switched.' });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};

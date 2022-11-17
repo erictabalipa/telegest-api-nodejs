@@ -72,4 +72,12 @@ router.delete('/lamp/:lampId', isAuth, [
 
 router.get('/lamps-deleted', isAuth, lampController.getDeletedLamps);
 
+router.post('/lamp-switch/:lampId', isAuth, [
+  check('lampId')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "id" parameter.')
+], lampController.postLightSwitch);
+
 module.exports = router;
