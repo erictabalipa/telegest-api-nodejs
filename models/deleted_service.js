@@ -67,7 +67,8 @@ const deletedServiceSchema = new Schema(
       {
         lamp: {
           type: Schema.Types.ObjectId,
-          red: 'Lamp'
+          red: 'Lamp',
+          required: true
         },
         newlamp: {
           type: Schema.Types.ObjectId,
@@ -118,6 +119,10 @@ const deletedServiceSchema = new Schema(
       type: Date,
       required: false
     },
+    oldId: {
+      type: String,
+      required: true
+    },
     deletedBy: {
       type: Schema.Types.ObjectId,
       red: 'User',
@@ -127,4 +132,4 @@ const deletedServiceSchema = new Schema(
   { timestamps: true }
 )
 
-module.exports = mongoose.model('Service', deletedServiceSchema);
+module.exports = mongoose.model('DeletedService', deletedServiceSchema);

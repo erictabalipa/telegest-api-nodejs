@@ -7,28 +7,32 @@ const deletedLampSchema = new Schema(
       type: String,
       required: true
     },
-    modelName: {
-      type: String,
-      required: true
+    model: {
+      name: {
+        type: String,
+        required: true
+      },
+      fabricator: {
+        type: String,
+        required: true
+      },
+      fabrication_date: {
+        type: Date,
+        required: true
+      },
+      life_time: {
+        type: Number,
+        required: true
+      }
     },
-    modelFabricator: {
-      type: String,
-      required: true
+    location: {
+      number: Number,
+      zip_code: String,
+      street: String,
+      district: String,
+      state: String,
+      reference: String
     },
-    modelFabrication_date: {
-      type: Date,
-      required: true
-    },
-    modelLife_time: {
-      type: Number,
-      required: true
-    },
-    locationNumber: Number,
-    locationZip_code: String,
-    locationStreet: String,
-    locationDistrict: String,
-    locationState: String,
-    locationReference: String,
     oldId: {
       type: String,
       required: true

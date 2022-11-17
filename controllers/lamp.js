@@ -1,8 +1,6 @@
 const { validationResult } = require('express-validator');
 
-const Service = require('../models/service');
 const User = require('../models/user');
-const Permission = require('../models/permission');
 const Lamp = require('../models/lamp');
 const Model = require('../models/model');
 const Location = require('../models/location');
@@ -425,23 +423,27 @@ exports.deleteLamp = async (req, res, next) => {
     // Saving Lamp in deleted database
     const deletedLamp = new DeletedLamp({
       name: lamp.name,
-      modelName: model.name,
-      modelFabricator: model.fabricator,
-      modelFabrication_date: model.fabrication_date,
-      modelLife_time: model.life_time,
+      model: {
+        name: model.name,
+        fabricator: model.fabricator,
+        fabrication_date: model.fabrication_date,
+        life_time: model.life_time,
+      },
       deletedBy: user,
       oldId: lamp.id
     })
     if (typeof lamp.location != 'undefined') {
       deleteLocation = true;
       const location = await Location.findById(lamp.location);
-      deletedLamp.locationNumber = location.number;
-      deletedLamp.locationZip_code = location.zip_code;
-      deletedLamp.locationStreet = location.street;
-      deletedLamp.locationDistrict = location.district;
-      deletedLamp.locationState = location.state;
+      deletedLamp.location = {
+        number: location.number,
+        zip_code: location.zip_code,
+        street: location.street,
+        district: location.district,
+        state: location.state
+      }
       if (typeof location.reference != 'undefined') {
-        deletedLamp.locationReference = location.reference;
+        deletedLamp.location.reference = location.reference;
       }
     }
     await deletedLamp.save()

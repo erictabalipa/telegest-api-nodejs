@@ -70,4 +70,6 @@ router.post('/complete-service', isAuth, [
     .withMessage('Invalid or missing "servicesCompleted" field.')
 ], serviceController.postServiceDone);
 
+router.get('/services-deleted', isAuth, serviceController.getDeletedServices);
+
 module.exports = router;

@@ -4,6 +4,7 @@ const Permission = require('../models/permission');
 const Lamp = require('../models/lamp');
 const Model = require('../models/model');
 const Location = require('../models/location');
+const DeletedService = require('../models/deleted_service');
 
 const { checkPermission, registerChange } = require('../utils/aux_functions');
 
@@ -486,6 +487,87 @@ exports.deleteService = async (req, res, next) => {
         }
       }
     }
+    // Fetching User responsable for the deleting
+    const user = await User.findById(req.userId)
+      .catch(err => {
+        const error = new Error('Error fetching user.');
+        error.statusCode = 500;
+        throw error;
+      })
+    // Saving Deleted Order
+    let deletedService = new DeletedService({
+      oldId: service.id,
+      deletedBy: user,
+      user: service.user,
+      code: service.code,
+      priority: service.priority,
+      deadline: service.deadline
+    })
+    if (typeof service.instalations != 'undefined') {
+      for (let index = 0; index < service.instalations.length; index++) {
+        // const location = {
+        //   number: service.instalations[index].location.number,
+        //   zip_code: service.instalations[index].location.zip_code,
+        //   street: service.instalations[index].location.street,
+        //   district: service.instalations[index].location.district,
+        //   state: service.instalations[index].location.state
+        // }
+        deletedService.instalations.push({
+          lamp: service.instalations[index].lamp,
+          location: service.instalations[index].location,
+          finished: service.instalations[index].finished
+        })
+        if (typeof service.instalations[index].materialsUsed != 'undefined') {
+          deletedService.instalations[index].materialsUsed = service.instalations[index].materialsUsed;
+        }
+        if (typeof service.instalations[index].finishedDate != 'undefined') {
+          deletedService.instalations[index].finishedDate = service.instalations[index].finishedDate;
+        }
+      }
+    }
+    if (typeof service.correctiveMaintenances != 'undefined') {
+      for (let index = 0; index < service.correctiveMaintenances.length; index++) {
+        deletedService.correctiveMaintenances.push({
+          lamp: service.correctiveMaintenances[index].lamp,
+          finished: service.correctiveMaintenances[index].finished
+        })
+        if (typeof service.correctiveMaintenances[index].materialsUsed != 'undefined') {
+          deletedService.correctiveMaintenances[index].materialsUsed = service.correctiveMaintenances[index].materialsUsed;
+        }
+        if (typeof service.correctiveMaintenances[index].finishedDate != 'undefined') {
+          deletedService.correctiveMaintenances[index].finishedDate = service.correctiveMaintenances[index].finishedDate;
+        }
+        if (typeof service.correctiveMaintenances[index].newlamp != 'undefined') {
+          deletedService.correctiveMaintenances[index].newlamp = service.correctiveMaintenances[index].newlamp;
+        }
+      }
+    }
+    if (typeof service.preventiveMaintenances != 'undefined') {
+      for (let index = 0; index < service.preventiveMaintenances.length; index++) {
+        deletedService.preventiveMaintenances.push({
+          lamp: service.preventiveMaintenances[index].lamp,
+          finished: service.preventiveMaintenances[index].finished
+        })
+        if (typeof service.preventiveMaintenances[index].materialsUsed != 'undefined') {
+          deletedService.preventiveMaintenances[index].materialsUsed = service.preventiveMaintenances[index].materialsUsed;
+        }
+        if (typeof service.preventiveMaintenances[index].finishedDate != 'undefined') {
+          deletedService.preventiveMaintenances[index].finishedDate = service.preventiveMaintenances[index].finishedDate;
+        }
+        if (typeof service.preventiveMaintenances[index].newlamp != 'undefined') {
+          deletedService.preventiveMaintenances[index].newlamp = service.preventiveMaintenances[index].newlamp;
+        }
+      }
+    }
+    if (typeof service.finishedDate != 'undefined') {
+      deletedService.finishedDate = service.finishedDate;
+    }
+    await deletedService.save()
+      .catch(err => {
+        const error = new Error('Error saving deleted service.');
+        error.statusCode = 500;
+        throw error;
+      });
     // Deleting Order
     await service.delete();
     res.status(200).json({ message: 'Service deleted successfully.' });
@@ -730,3 +812,26 @@ exports.postServiceDone = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getDeletedServices = async (req, res, next) => {
+  try {
+    // Permissions check
+    await checkPermission(req.permissions, "get-deletedServices")
+      .catch(err => { throw err; });
+    // Fetching Deleted Lamps
+    await DeletedService.find()
+      .then(deletedServices => {
+        res.status(200).json(deletedServices);
+      })
+      .catch(err => {
+        const error = new Error('Error fetching deleted orders.');
+        error.statusCode = 500;
+        throw error;
+      });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+}
