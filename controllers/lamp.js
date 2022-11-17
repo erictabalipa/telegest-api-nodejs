@@ -474,3 +474,26 @@ exports.deleteLamp = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getDeletedLamps = async (req, res, next) => {
+  try {
+    // Permissions check
+    await checkPermission(req.permissions, "get-deletedLamps")
+      .catch(err => { throw err; });
+    // Fetching Deleted Lamps
+    await DeletedLamp.find()
+      .then(deletedLamps => {
+        res.status(200).json(deletedLamps);
+      })
+      .catch(err => {
+        const error = new Error('Error fetching deleted lamps.');
+        error.statusCode = 500;
+        throw error;
+      });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+}

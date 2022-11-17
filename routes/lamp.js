@@ -70,4 +70,6 @@ router.delete('/lamp/:lampId', isAuth, [
     .withMessage('Invalid or missing "id" parameter.')
 ], lampController.deleteLamp);
 
+router.get('/lamps-deleted', isAuth, lampController.getDeletedLamps);
+
 module.exports = router;
