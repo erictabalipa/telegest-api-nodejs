@@ -429,7 +429,8 @@ exports.deleteLamp = async (req, res, next) => {
       modelFabricator: model.fabricator,
       modelFabrication_date: model.fabrication_date,
       modelLife_time: model.life_time,
-      deletedBy: user
+      deletedBy: user,
+      oldId: lamp.id
     })
     if (typeof lamp.location != 'undefined') {
       deleteLocation = true;

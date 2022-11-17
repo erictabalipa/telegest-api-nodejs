@@ -29,6 +29,10 @@ const deletedLampSchema = new Schema(
     locationDistrict: String,
     locationState: String,
     locationReference: String,
+    oldId: {
+      type: String,
+      required: true
+    },
     deletedBy: {
       type: Schema.Types.ObjectId,
       red: 'User',
