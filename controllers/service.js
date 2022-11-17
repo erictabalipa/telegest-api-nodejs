@@ -5,7 +5,7 @@ const Lamp = require('../models/lamp');
 const Model = require('../models/model');
 const Location = require('../models/location');
 
-const { checkPermission } = require('../utils/aux_functions');
+const { checkPermission, registerChange } = require('../utils/aux_functions');
 
 const { validationResult } = require('express-validator');
 

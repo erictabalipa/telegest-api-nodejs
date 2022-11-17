@@ -1,5 +1,5 @@
 const express = require('express');
-// const { body } = require('express-validator');
+const { check, body } = require('express-validator');
 
 const modelController = require('../controllers/model');
 const isAuth = require('../middleware/is-auth');

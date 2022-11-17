@@ -3,7 +3,7 @@
 const Model = require('../models/model');
 const Permission = require('../models/permission');
 
-const { checkPermission } = require('../utils/aux_functions');
+const { checkPermission, registerChange } = require('../utils/aux_functions');
 
 exports.getModels = async (req, res, next) => {
   try {

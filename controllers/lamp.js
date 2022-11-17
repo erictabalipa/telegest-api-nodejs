@@ -6,8 +6,9 @@ const Permission = require('../models/permission');
 const Lamp = require('../models/lamp');
 const Model = require('../models/model');
 const Location = require('../models/location');
+const DeletedLamp = require('../models/deleted_lamp');
 
-const { checkPermission } = require('../utils/aux_functions');
+const { checkPermission, registerChange } = require('../utils/aux_functions');
 
 function checkRequest(req) {
   if (typeof req.body === 'undefined') {
@@ -389,7 +390,13 @@ exports.deleteLamp = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // Fetching Lamp's Model
+    // Checking if Lamp is assigned to a service
+    if (lamp.serviceAssigned == true) {
+      const error = new Error('Lamps assigned to a service cannot be deleted.');
+      error.statusCode = 409;
+      throw error;
+    }
+    // Fetching Lamps with the same model
     await Lamp.where('model').equals(lamp.model)
       .then(lamps => {
         if (lamps.length < 2) {
@@ -397,13 +404,51 @@ exports.deleteLamp = async (req, res, next) => {
         }
       })
       .catch(err => {
-        const error = new Error('Error finding lamp model in database');
+        const error = new Error('Error finding lamp model.');
         error.statusCode = 500;
         throw error;
       })
+    // Fetching Lamp's Model
+    const model = await Model.findById(lamp.model)
+      .catch(err => {
+        const error = new Error('Error fetching lamp model.');
+        error.statusCode = 500;
+        throw error;
+      })
+    // Fetching User responsable for the deleting
+    const user = await User.findById(req.userId)
+      .catch(err => {
+        const error = new Error('Error fetching user.');
+        error.statusCode = 500;
+        throw error;
+      })
+    // Saving Lamp in deleted database
+    const deletedLamp = new DeletedLamp({
+      name: lamp.name,
+      modelName: model.name,
+      modelFabricator: model.fabricator,
+      modelFabrication_date: model.fabrication_date,
+      modelLife_time: model.life_time,
+      deletedBy: user
+    })
     if (typeof lamp.location != 'undefined') {
       deleteLocation = true;
+      const location = await Location.findById(lamp.location);
+      deletedLamp.locationNumber = location.number;
+      deletedLamp.locationZip_code = location.zip_code;
+      deletedLamp.locationStreet = location.street;
+      deletedLamp.locationDistrict = location.district;
+      deletedLamp.locationState = location.state;
+      if (typeof location.reference != 'undefined') {
+        deletedLamp.locationReference = location.reference;
+      }
     }
+    await deletedLamp.save()
+      .catch(err => {
+        const error = new Error('Error saving deleted lamp.');
+        error.statusCode = 500;
+        throw error;
+      });
     // Deleting Lamp, Location and Model (if necessary)
     if (deleteModel && deleteLocation) {
       await Location.findByIdAndDelete(lamp.location);

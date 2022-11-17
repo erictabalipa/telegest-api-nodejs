@@ -5,7 +5,7 @@ const { validationResult } = require('express-validator');
 const Permission = require('../models/permission');
 const User = require('../models/user');
 
-const { checkPermission, registerChange } = require('../utils/aux_functions');
+const { checkPermission } = require('../utils/aux_functions');
 
 exports.getUsers = async (req, res, next) => {
   try {
