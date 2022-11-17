@@ -519,6 +519,12 @@ exports.postLightSwitch = async (req, res, next) => {
     }
     await lamp.save();
     res.status(200).json({ message: 'Lamp state switched.' });
+    // Registering Changes
+    if (lamp.online == true) {
+      await registerChange(req.email, 'switch a lamp state to online.', req.params.lampId);
+    } else {
+      await registerChange(req.email, 'switch a lamp state to offline.', req.params.lampId);
+    }
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
