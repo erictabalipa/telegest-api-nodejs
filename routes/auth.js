@@ -16,7 +16,7 @@ router.get('/user/:id', isAuth, [
     .withMessage('Invalid or missing "id" parameter.')
 ], authController.getUser);
 
-router.post('/signup', [
+router.post('/signup',isAuth, [
   body('email')
     .exists()
     .trim()
