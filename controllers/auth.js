@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 
+const { ObjectId } = require('mongodb');
 const Permission = require('../models/permission');
 const User = require('../models/user');
 
@@ -209,14 +210,14 @@ exports.editUser = async (req, res, next) => {
     }
     // Verifying that the email is not in use
     const userWithEmail = await User.findOne({ email: req.body.email });
-    if (userWithEmail != null) {
+    if (userWithEmail != null && userWithEmail._id != req.params.id) {
       const error = new Error('There is already a user with this email.');
       error.statusCode = 409;
       throw error;
     }
     // Updating user
     const hashedPw = await bcrypt.hash(req.body.password, 12);
-    User.updateOne(
+    await User.updateOne(
       { _id: ObjectId(req.params.id) },
       { $set: { name: req.body.name, email: req.body.email, password: hashedPw }
     }).catch(err => {
