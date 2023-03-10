@@ -73,4 +73,29 @@ router.get('/permissions/:token', [
     .withMessage('Invalid "token" parameter.')
 ], authController.getPermissions);
 
+router.put('/edit-user/:id', isAuth, [
+  check('id')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "id" parameter.'),
+  body('name')
+    .exists()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Please enter a valid name.'),
+  body('email')
+    .exists()
+    .trim()
+    .toLowerCase()
+    .isEmail()
+    .withMessage('Please enter a valid email.'),
+  body('password')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Please enter a valid password.')
+], authController.editUser);
+
 module.exports = router;
