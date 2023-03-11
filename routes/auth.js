@@ -90,12 +90,15 @@ router.put('/edit-user/:id', isAuth, [
     .trim()
     .toLowerCase()
     .isEmail()
-    .withMessage('Please enter a valid email.'),
+    .withMessage('Please enter a valid email.')
+], authController.editUser);
+
+router.put('edit-password', isAuth, [
   body('password')
     .exists()
     .isString()
     .notEmpty()
     .withMessage('Please enter a valid password.')
-], authController.editUser);
+], authController.editPassword);
 
 module.exports = router;
