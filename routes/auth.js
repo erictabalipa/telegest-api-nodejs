@@ -94,6 +94,12 @@ router.put('/edit-user/:id', isAuth, [
 ], authController.editUser);
 
 router.put('edit-password', isAuth, [
+  body('userId')
+    .exists()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Please enter a valid userId.'),
   body('password')
     .exists()
     .isString()

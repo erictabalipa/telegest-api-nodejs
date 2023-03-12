@@ -242,7 +242,7 @@ exports.editPassword = async (req, res, next) => {
       throw error;
     }
     // Checking if user exists
-    const user = await User.findById(req.userId)
+    const user = await User.findById(req.body.userId)
       .catch(err => {
         const error = new Error('Error fetching users.');
         error.statusCode = 500;
