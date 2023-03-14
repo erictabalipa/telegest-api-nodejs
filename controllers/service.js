@@ -260,6 +260,19 @@ exports.editService = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
+    if (req.body.priority != 'baixa' && req.body.priority != 'normal' && req.body.priority != 'alta') {
+      const error = new Error('Invalid "priority" field.');
+      error.statusCode = 400;
+      throw error;
+    }
+    // Checking if the request has services
+    if ((typeof req.body.instalations == 'undefined' || req.body.instalations.length == 0) &&
+    (typeof req.body.correctiveMaintenances == 'undefined' || req.body.correctiveMaintenances.length == 0) &&
+    (typeof req.body.preventiveMaintenances == 'undefined' || req.body.preventiveMaintenances.length == 0)) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      throw error;
+    }
     // Checking if the service exist
     let service = await Service.findById(req.params.id);
     if (service == null) {
@@ -267,168 +280,324 @@ exports.editService = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // Checking if the users and lamps exists
-    let user = null;
-    let lamp = null;
-    if (req.body.lampsInstalled.length > 0) {
-      for (let index = 0; index < req.body.lampsInstalled.length; index++) {
-        for (let index2 = 0; index2 < req.body.lampsInstalled[index].usersId.length; index2++) {
-          await User.findById(req.body.lampsInstalled[index].usersId[index2])
-          .then(userData => {
-            user = userData;
-          })
-          .catch(err => {
-            const error = new Error('Error searching user in database.');
-            error.statusCode = 500;
-            throw error;
-          });
-          if (user == null) {
-            const error = new Error('User not found.');
-            error.statusCode = 404;
+    // Checking if the user exists
+    await User.findById(req.body.userId)
+      .then(user => {
+        if (user == null) {
+          const error = new Error('User not found.');
+          error.statusCode = 404;
+          throw error;
+        }
+      })
+      .catch(err => {
+        if (typeof err.statusCode == 'undefined') {
+          const error = new Error('Error searching user in database.');
+          error.statusCode = 500;
+          throw error;
+        } else {
+          throw err;
+        }
+      });
+    // Editing basic data and checking lamps to be unassigned
+    service.user = req.body.userId;
+    service.code = req.body.code;
+    service.priority = req.body.priority;
+    service.deadline = req.body.deadline;
+    let lampsToUnassign = [];
+    if (typeof req.body.instalations != 'undefined') {
+      service.instalations.forEach(element => {
+        let finded = false;
+        req.body.instalations.forEach(reqInstalation => {
+          if (element.lamp == reqInstalation.lampId) {
+            finded = true;
+          }
+        })
+        if (!finded && typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
             throw error;
           }
         }
-        await Lamp.findById(req.body.lampsInstalled[index].lampId)
-          .then(lampData => {
-            lamp = lampData;
-          })
-          .catch(err => {
-            const error = new Error('Error searching lamp in database.');
-            error.statusCode = 500;
-            throw error;
-          });
-          if (lamp == null) {
-            const error = new Error('Lamp not found.');
-            error.statusCode = 404;
-            throw error;
-          } else if (typeof lamp.location != 'undefined') {
-            const error = new Error('Lamps already addressed cannot be installed.');
-            error.statusCode = 400;
-            throw error;
-          }
-      }
-    }
-    if (req.body.lampsRepaired.length > 0) {
-      for (let index = 0; index < req.body.lampsRepaired.length; index++) {
-        for (let index2 = 0; index2 < req.body.lampsRepaired[index].usersId.length; index2++) {
-          await User.findById(req.body.lampsRepaired[index].usersId[index2])
-          .then(userData => {
-            user = userData;
-          })
-          .catch(err => {
-            const error = new Error('Error searching user in database.');
-            error.statusCode = 500;
-            throw error;
-          });
-          if (user == null) {
-            const error = new Error('User not found.');
-            error.statusCode = 500;
+        if (!finded) { lampsToUnassign.push(element.lamp); }
+      })
+    } else {
+      service.instalations.forEach(element => {
+        if (typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
             throw error;
           }
         }
-        await Lamp.findById(req.body.lampsRepaired[index].oldLampId)
-          .then(lampData => {
-            lamp = lampData;
-          })
-          .catch(err => {
-            const error = new Error('Error searching lamp in database.');
-            error.statusCode = 500;
-            throw error;
-          });
-          if (lamp == null) {
-            const error = new Error('Lamp not found.');
-            error.statusCode = 404;
-            throw error;
-          } else if (typeof lamp.location == 'undefined') {
-            const error = new Error('Unaddressed lamps cannot be replaced.');
-            error.statusCode = 400;
-            throw error;
-          }
-        await Lamp.findById(req.body.lampsRepaired[index].newLampId)
-          .then(lampData => {
-            lamp = lampData;
-          })
-          .catch(err => {
-            const error = new Error('Error searching lamp in database.');
-            error.statusCode = 500;
-            throw error;
-          });
-          if (lamp == null) {
-            const error = new Error('Lamp not found.');
-            error.statusCode = 404;
-            throw error;
-          } else if (typeof lamp.location != 'undefined') {
-            const error = new Error('Lamps already addressed cannot be installed.');
-            error.statusCode = 400;
-            throw error;
-          }
-      }
+      })
     }
-    // Editing and saving service
-    service.user = req.userId;
-    service.lampsInstalled = [];
-    service.lampsRepaired = [];
-    if (req.body.lampsInstalled.length > 0) {
-      for (let index = 0; index < req.body.lampsInstalled.length; index++) {
-        let lampsInstalled = {
-          users: [],
-          lamp: req.body.lampsInstalled[index].lampId,
+    if (typeof req.body.correctiveMaintenances != 'undefined') {
+      service.correctiveMaintenances.forEach(element => {
+        let finded = false;
+        req.body.correctiveMaintenances.forEach(reqCorrectiveMaintenance => {
+          if (element.lamp == reqCorrectiveMaintenance) {
+            finded = true;
+          }
+        })
+        if (!finded && typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
+            throw error;
+          }
+        }
+        if (!finded) { lampsToUnassign.push(element.lamp); }
+      })
+    } else {
+      service.correctiveMaintenances.forEach(element => {
+        if (typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
+            throw error;
+          }
+        }
+      })
+    }
+    if (typeof req.body.preventiveMaintenances != 'undefined') {
+      service.preventiveMaintenances.forEach(element => {
+        let finded = false;
+        req.body.preventiveMaintenances.forEach(reqPreventiveMaintenance => {
+          if (element.lamp == reqPreventiveMaintenance) {
+            finded = true;
+          }
+        })
+        if (!finded && typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
+            throw error;
+          }
+        }
+        if (!finded) { lampsToUnassign.push(element.lamp); }
+      })
+    } else {
+      service.preventiveMaintenances.forEach(element => {
+        if (typeof element.finished != 'undefined') {
+          if (element.finished == true) {
+            const error = new Error('Finished installations and maintenance cannot be removed from the order.');
+            error.statusCode = 409;
+            throw error;
+          }
+        }
+      })
+    }
+    // Checking lamps to assign
+    let lampsToAssign = [];
+    if (typeof req.body.instalations != 'undefined') {
+      req.body.instalations.forEach(async (newElement) => {
+        let finded = false;
+        service.instalations.forEach(async (element) => {
+          if (newElement.lampId == element.lamp) {
+            finded = true;
+          }
+        })
+        if (!finded) {
+          lampsToAssign.push(newElement.lampId);
+          await Lamp.findById(newElement.lampId)
+            .then(lamp => {
+              if (lamp == null) {
+                const error = new Error('Lamp not found.');
+                error.statusCode = 404;
+                throw error;
+              } else if (typeof lamp.location != 'undefined') {
+                const error = new Error('It is not possible to install an addressed lamp.');
+                error.statusCode = 409;
+                throw error;
+              } else if (lamp.serviceAssigned == true) {
+                const error = new Error('One or more lamps are already assigned to a service.');
+                error.statusCode = 409;
+                throw error;
+              }
+            })
+            .catch(err => {
+              if (typeof err.statusCode == 'undefined') {
+                const error = new Error('Error searching lamp in database.');
+                error.statusCode = 500;
+                throw error;
+              }
+              throw err;
+            });
+        }
+      })
+    }
+    if (typeof req.body.correctiveMaintenances != 'undefined') {
+      req.body.correctiveMaintenances.forEach(async (newElement) => {
+        let finded = false;
+        service.correctiveMaintenances.forEach(async (element) => {
+          if (newElement == element.lamp) {
+            finded = true;
+          }
+        })
+        if (!finded) {
+          lampsToAssign.push(newElement);
+          await Lamp.findById(newElement)
+            .then(lamp => {
+              if (lamp == null) {
+                const error = new Error('Lamp not found.');
+                error.statusCode = 404;
+                throw error;
+              } else if (typeof lamp.location == 'undefined') {
+                const error = new Error('It is not possible to perform maintenance on an unaddressed lamp.');
+                error.statusCode = 409;
+                throw error;
+              } else if (lamp.serviceAssigned == true) {
+                const error = new Error('One or more lamps are already assigned to a service.');
+                error.statusCode = 409;
+                throw error;
+              }
+            })
+            .catch(err => {
+              if (typeof err.statusCode == 'undefined') {
+                const error = new Error('Error searching lamp in database.');
+                error.statusCode = 500;
+                throw error;
+              }
+              throw err;
+            });
+        }
+      })
+    }
+    if (typeof req.body.preventiveMaintenances != 'undefined') {
+      req.body.preventiveMaintenances.forEach(async (newElement) => {
+        let finded = false;
+        service.preventiveMaintenances.forEach(async (element) => {
+          if (newElement == element.lamp) {
+            finded = true;
+          }
+        })
+        if (!finded) {
+          lampsToAssign.push(newElement);
+          await Lamp.findById(newElement)
+            .then(lamp => {
+              if (lamp == null) {
+                const error = new Error('Lamp not found.');
+                error.statusCode = 404;
+                throw error;
+              } else if (typeof lamp.location == 'undefined') {
+                const error = new Error('It is not possible to perform maintenance on an unaddressed lamp.');
+                error.statusCode = 409;
+                throw error;
+              } else if (lamp.serviceAssigned == true) {
+                const error = new Error('One or more lamps are already assigned to a service.');
+                error.statusCode = 409;
+                throw error;
+              }
+            })
+            .catch(err => {
+              if (typeof err.statusCode == 'undefined') {
+                const error = new Error('Error searching lamp in database.');
+                error.statusCode = 500;
+                throw error;
+              }
+              throw err;
+            });
+        }
+      })
+    }
+    // Editing instalations
+    let newInstalations = [];
+    service.instalations.forEach(element => {
+      if (element.finished == true) {
+        newInstalations.push(element);
+      }
+    })
+    req.body.instalations.forEach(element => {
+      let finded1 = false;
+      lampsToAssign.forEach(toAssign => {
+        if (element.lampId == toAssign) { finded1 = true; }
+      })
+      let finded2 = false;
+      newInstalations.forEach(element2 => {
+        if (element.lampId == element2.lamp) { finded2 = true; }
+      })
+      if (finded1 || !finded2) {
+        let newInstalation = {
+          lamp: element.lampId,
           location: {
-            number: req.body.lampsInstalled[index].location.number,
-            zip_code: req.body.lampsInstalled[index].location.zip_code,
-            street: req.body.lampsInstalled[index].location.street,
-            district: req.body.lampsInstalled[index].location.district,
-            state: req.body.lampsInstalled[index].location.state
+            number: element.location.number,
+            zip_code: element.location.zip_code,
+            street: element.location.street,
+            district: element.location.district,
+            state: element.location.state,
           },
           finished: false
         }
-        if (req.body.lampsInstalled[index].finished == true) {
-          lampsInstalled.finished = true;
-          if (typeof req.body.lampsInstalled[index].finishedDate == 'undefined') {
-            const error = new Error('Missing finished date on a finished service.');
-            error.statusCode = 400;
-            throw error;
-          }
-          lampsInstalled.finishedDate = req.body.lampsInstalled[index].finishedDate;
+        if (typeof element.location.reference != 'undefined') {
+          newInstalation.location.reference = element.location.reference;
         }
-        if (typeof req.body.lampsInstalled[index].location.reference != 'undefined') {
-          lampsInstalled.location.reference = req.body.lampsInstalled[index].location.reference;
-        }
-        for (let index2 = 0; index2 < req.body.lampsInstalled[index].usersId.length; index2++) {
-          lampsInstalled.users.push(req.body.lampsInstalled[index].usersId[index2]);
-        }
-        service.lampsInstalled.push(lampsInstalled);
+        newInstalations.push(newInstalation);
       }
-    }
-    if (req.body.lampsRepaired.length > 0) {
-      for (let index = 0; index < req.body.lampsRepaired.length; index++) {
-        let lampsRepaired = {
-          users: [],
-          oldLamp: req.body.lampsRepaired[index].oldLampId,
-          newLamp: req.body.lampsRepaired[index].newLampId,
+    })
+    service.instalations = newInstalations;
+    // Editing corrective maintenances
+    let newCorrectiveMaintenances = [];
+    service.correctiveMaintenances.forEach(element => {
+      if (element.finished == true) {
+        newCorrectiveMaintenances.push(element);
+      }
+    })
+    req.body.correctiveMaintenances.forEach(element => {
+      let finded1 = false;
+      lampsToAssign.forEach(toAssign => {
+        if (element == toAssign) { finded1 = true; }
+      })
+      let finded2 = false;
+      newCorrectiveMaintenances.forEach(element2 => {
+        if (element == element2.lamp) { finded2 = true; }
+      })
+      if (finded1 || !finded2) {
+        let newCorrectiveMaintenance = {
+          lamp: element,
           finished: false
         }
-        if (req.body.lampsRepaired[index].finished == true) {
-          lampsRepaired.finished = true;
-          if (typeof req.body.lampsRepaired[index].finishedDate == 'undefined') {
-            const error = new Error('Missing finished date on a finished service.');
-            error.statusCode = 400;
-            throw error;
-          }
-          lampsRepaired.finishedDate = req.body.lampsRepaired[index].finishedDate;
-        }
-        for (let index2 = 0; index2 < req.body.lampsRepaired[index].usersId.length; index2++) {
-          lampsRepaired.users.push(req.body.lampsRepaired[index].usersId[index2]);
-        }
-        service.lampsRepaired.push(lampsRepaired);
+        newCorrectiveMaintenances.push(newCorrectiveMaintenance);
       }
-    }
+    })
+    service.correctiveMaintenances = newCorrectiveMaintenances;
+    // Editing preventive maintenances
+    let newPreventiveMaintenances = [];
+    service.preventiveMaintenances.forEach(element => {
+      if (element.finished == true) {
+        newPreventiveMaintenances.push(element);
+      }
+    })
+    req.body.preventiveMaintenances.forEach(element => {
+      let finded1 = false;
+      lampsToAssign.forEach(toAssign => {
+        if (element == toAssign) { finded1 = true; }
+      })
+      let finded2 = false;
+      newPreventiveMaintenances.forEach(element2 => {
+        if (element == element2.lamp) { finded2 = true; }
+      })
+      if (finded1 || !finded2) {
+        let newPreventiveMaintenance = {
+          lamp: element,
+          finished: false
+        }
+        newPreventiveMaintenances.push(newPreventiveMaintenance);
+      }
+    })
+    service.preventiveMaintenances = newPreventiveMaintenances;
     await service.save();
-    res.status(201).json({ message: 'Service edited successfully.' });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
+    // Assigning lamps
+    for (let index = 0; index < lampsToAssign.length; index++) {
+      await Lamp.findByIdAndUpdate(lampsToAssign[index], { serviceAssigned: true });
     }
+    // Unassigning lamps
+    for (let index = 0; index < lampsToUnassign.length; index++) {
+      await Lamp.findByIdAndUpdate(lampsToUnassign[index], { serviceAssigned: false });
+    }
+    res.status(200).json({ message: 'Service edited successfully.' });
+  } catch (err) {
+    if (!err.statusCode) { err.statusCode = 500; }
     next(err);
   }
 };
