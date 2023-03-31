@@ -134,7 +134,7 @@ exports.login = async (req, res, next) => {
         permission: user.permission
       },
       "nobody's gonna know, nobody's gonna know - they gonna know! - who will they know?, who will they know?, who will they know? - I can't, I can't, I just, I can't - omg!",
-      { expiresIn: '1h' }
+      { expiresIn: '6h' }
     );
     res.status(200).json({ token: token, userId: user._id.toString() });
   } catch (err) {
