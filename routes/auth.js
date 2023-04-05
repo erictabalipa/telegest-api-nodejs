@@ -107,4 +107,17 @@ router.put('edit-password', isAuth, [
     .withMessage('Please enter a valid password.')
 ], authController.editPassword);
 
+router.put('/edit-user-permissions/:id', isAuth, [
+  check('id')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "id" parameter.'),
+  body('permissionsId')
+    .exists()
+    .isString()
+    .notEmpty()
+    .withMessage('Invalid or missing "permissionsId" parameter.')
+], authController.editUserPermissions);
+
 module.exports = router;

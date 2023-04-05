@@ -269,3 +269,55 @@ exports.editPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.editUserPermissions = async (req, res, next) => {
+  try {
+    // Permissions check
+    await checkPermission(req.permissions, "edit-user-permissions");
+    // Checking the request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Invalid data.');
+      error.statusCode = 400;
+      error.data = errors.array();
+      throw error;
+    }
+    // Checking if user exists
+    const user = await User.findById(req.params.id)
+      .catch(err => {
+        const error = new Error('Error fetching users.');
+        error.statusCode = 500;
+        throw error;
+      })
+    if (user == null) {
+      const error = new Error('User not found.');
+      error.statusCode = 404;
+      throw error;
+    }
+    // Checking if permission exists
+    const permission = await Permission.findById(req.body.permissionsId)
+      .catch(err => {
+        const error = new Error('Error fetching permissions.');
+        error.statusCode = 500;
+        throw error;
+      })
+    if (permission == null) {
+      const error = new Error('Permission not found.');
+      error.statusCode = 404;
+      throw error;
+    }
+    // Updating user
+    await User.updateOne(
+      { _id: ObjectId(req.params.id) },
+      { $set: { permission: ObjectId(req.body.permissionsId) }
+    }).catch(err => {
+      const error = new Error('Error updating user.');
+      error.statusCode = 500;
+      throw error;
+    });
+    res.status(200).json({ message: 'User successfully updated.' });
+  } catch (err) {
+    if (!err.statusCode) { err.statusCode = 500; }
+    next(err);
+  }
+};
