@@ -1,14 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+const db = require('./db');
+// const mongoose = require('mongoose');
 
-const MONGODB_URI = 'mongodb+srv://' + "telegestao" + ':' + "telegestao_tcc" + '@cluster0.izanfqg.mongodb.net/' + "tcc";
+// const MONGODB_URI = 'mongodb+srv://' + "telegestao" + ':' + "telegestao_tcc" + '@cluster0.izanfqg.mongodb.net/' + "tcc";
 
 const authRoutes = require('./routes/auth');
 const lampRoutes = require('./routes/lamp');
 const modelRoutes = require('./routes/model');
 const servRoutes = require('./routes/service');
 const changeRoutes = require('./routes/changelog');
+const communicationRoutes = require('./routes/communication');
 
 const app = express();
 
@@ -26,6 +28,7 @@ app.use(lampRoutes);
 app.use(modelRoutes);
 app.use(servRoutes);
 app.use(changeRoutes);
+app.use(communicationRoutes);
 
 app.use((error, req, res, next) => {
     console.log(error);
@@ -35,9 +38,13 @@ app.use((error, req, res, next) => {
     res.status(status).json({ message: message, data: data });
 });
 
-mongoose
-    .connect(MONGODB_URI)
-    .then(result => {
-        app.listen(8080);
-    })
-    .catch(err => console.log(err));
+db.once('open', () => {
+    app.listen(8080);
+})
+
+// mongoose
+//     .connect(MONGODB_URI)
+//     .then(result => {
+//         app.listen(8080);
+//     })
+//     .catch(err => console.log(err));

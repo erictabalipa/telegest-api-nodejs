@@ -24,6 +24,10 @@ const lampSchema = new Schema(
     serviceAssigned: {
       type: Boolean,
       required: true
+    },
+    radioId: {
+      type: Number,
+      required: false
     }
   },
   { timestamps: true }

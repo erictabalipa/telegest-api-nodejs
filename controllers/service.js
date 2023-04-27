@@ -142,6 +142,9 @@ exports.postService = async (req, res, next) => {
               if (typeof req.body.instalations[index].location.reference != 'undefined') {
                 installation.location.reference = req.body.instalations[index].location.reference;
               }
+              if (typeof req.body.instalations[index].radioId != 'undefined') {
+                installation.radioId = req.body.instalations[index].radioId;
+              }
               service.instalations.push(installation);
             })
             .catch(err => {
@@ -532,6 +535,9 @@ exports.editService = async (req, res, next) => {
         if (typeof element.location.reference != 'undefined') {
           newInstalation.location.reference = element.location.reference;
         }
+        if (typeof element.radioId != 'undefined') {
+          newInstalation.radioId = element.radioId;
+        }
         newInstalations.push(newInstalation);
       }
     })
@@ -836,6 +842,12 @@ exports.postServiceDone = async (req, res, next) => {
               })
               lamp.online = true;
               lamp.serviceAssigned = false;
+              // CHANGE ME - WARNING !!!
+              if (typeof service.instalations[index2].radioId != 'undefined') {
+                lamp.radioId = service.instalations[index2].radioId;
+              } else {
+                lamp.radioId = 1;
+              }
               await lamp.save();
               // Completing Service
               service.instalations[index2].finished = true;

@@ -49,6 +49,10 @@ const serviceSchema = new Schema(
           },
           reference: String
         },
+        radioId: {
+          type: Number,
+          required: false
+        },
         materialsUsed: {
           type: String,
           required: false
