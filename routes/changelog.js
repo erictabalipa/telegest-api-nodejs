@@ -7,4 +7,6 @@ const router = express.Router();
 
 router.get('/changes', isAuth, changesController.getChanges);
 
+router.get('/errors', isAuth, changesController.getErrors);
+
 module.exports = router;
